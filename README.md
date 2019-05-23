@@ -1,2 +1,2 @@
-# mlet
-code for mlet model submitted to NeurlPS 2019
+# hcet
+code for hcet model submitted to NeurlPS 2019
