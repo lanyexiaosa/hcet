@@ -84,14 +84,14 @@ def build_model(options):
     cpt_var = tf.placeholder(tf.int32, shape=(None, options['batch_size'], options['max_cpt_per_visit']), name='cpt_var')
     med_var = tf.placeholder(tf.int32, shape=(None, options['batch_size'], options['max_med_per_visit']), name='med_var')
     demo_var = tf.placeholder(tf.int32, shape=(None, options['batch_size'], options['demo_per_visit']), name='demo_var')
-    topic_var = tf.placeholder(tf.int32, shape=(None, options['batch_size'], options['max_topic_per_visit']), name='demo_var')
+    topic_var = tf.placeholder(tf.int32, shape=(None, options['batch_size'], options['max_topic_per_visit']), name='topic_var')
 
     #mask for skip connection
     icd_mask = tf.placeholder(tf.float32, shape=(None, options['batch_size'], options['max_icd_per_visit']), name='icd_mask')
     cpt_mask = tf.placeholder(tf.float32, shape=(None, options['batch_size'], options['max_cpt_per_visit']), name='cpt_mask')
     med_mask = tf.placeholder(tf.float32, shape=(None, options['batch_size'], options['max_med_per_visit']), name='med_mask')
     demo_mask = tf.placeholder(tf.float32, shape=(None, options['batch_size'], options['demo_per_visit']), name='demo_mask')
-    topic_mask = tf.placeholder(tf.float32, shape=(None, options['batch_size'], options['max_topic_per_visit']), name='demo_mask')
+    topic_mask = tf.placeholder(tf.float32, shape=(None, options['batch_size'], options['max_topic_per_visit']), name='topic_mask')
 
     # lookup is the multiplication to retrieve embeddings from embedding matrix
     #second param is the index to retrieve
