@@ -1,5 +1,5 @@
 # HCET: Hierarchical Clinical Embedding with Topic Modelling on Electronic Health Record for Predicting Depression
-MiME is a novel EHR embedding algorithm that takes the relationship between diagnosis and its treatments into account when learning to represent each hospital visit.
+HCET is a temopral deep learning model which leverage the data heterogeneity of EHR by building hierachical embedding for diagosis, procedure, medication, demographic information and topic features from clinical notes. It learns the inherent structure for different types of EHR data and effectivelty process temporal information, which indicates a novel approach to constuct deep learnig models on EHR.
   
 #### Running HCET
 
