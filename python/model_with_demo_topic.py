@@ -376,7 +376,7 @@ def sample_batch(seqs, labels, batch_size):
     idx = np.random.randint(0, len(seqs) - batch_size + 1)
     return seqs[idx:idx+batch_size], labels[idx:idx+batch_size]
 
-if __name__='__main__':
+if __name__=='__main__':
 
 
     #set parameters
