@@ -380,7 +380,7 @@ def get_data(back_day,block,window):
     return patient_data,labels,pids,pairs
 
 
-if __name__='__main__':
+if __name__=='__main__':
 
     days_data,days_label,days_pids,_=get_data(15,0,180)
     #save the data
