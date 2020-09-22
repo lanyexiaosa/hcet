@@ -3,13 +3,13 @@ import sys, pdb, os
 import numpy as np
 import pickle
 import tensorflow as tf
-import sonnet as snt
+
 from sklearn.metrics import roc_auc_score,average_precision_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import binarize
 
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+# os.environ["CUDA_VISIBLE_DEVICES"]="1"
 print("Tensorflow verion:",tf.__version__)
 
 
@@ -19,7 +19,7 @@ def load_data(input_path,min_threshold, max_threshold, seed, seqs_name='.seqs', 
 
     new_seqs = []
     new_labels = []
-    new_demos= []
+
     for seq, label in zip(seqs, labels):
         if len(seq) < min_threshold or len(seq) > max_threshold:
             continue
@@ -32,7 +32,7 @@ def load_data(input_path,min_threshold, max_threshold, seed, seqs_name='.seqs', 
     labels = new_labels
 
     temp_seqs, test_seqs, temp_labels, test_labels = train_test_split(seqs, labels, test_size=0.2, random_state=seed)
-    train_seqs, valid_seqs, train_labels, valid_labels = train_test_split(temp_seqs, temp_labels, test_size=0.1, random_state=seed)
+    train_seqs, valid_seqs, train_labels, valid_labels = train_test_split(temp_seqs, temp_labels, test_size=0.125, random_state=seed)
 
     train_size = int(len(train_seqs))
     train_seqs = train_seqs[:train_size]
@@ -62,11 +62,15 @@ def build_model(options):
     #different choice of activation funciton
     if options['emb_activation'] == 'sigmoid':
         emb_activation = tf.nn.sigmoid
+    elif options['emb_activation'] == 'tanh':
+        emb_activation = tf.nn.tanh
     else:
         emb_activation = tf.nn.relu
 
     if options['visit_activation'] == 'sigmoid':
         visit_activation = tf.nn.sigmoid
+    elif options['visit_activation'] == 'tanh':
+        visit_activation = tf.nn.tanh
     else:
         visit_activation = tf.nn.relu
         
@@ -98,8 +102,6 @@ def build_model(options):
     icd_visit = emb_activation(icd_visit)
     icd_visit = icd_visit * tf.reshape(icd_mask, (-1, options['max_icd_per_visit']))[:, :, None] ####Masking####
     icd_visit = tf.reduce_sum(icd_visit, axis=1)
-    
-   # dx_visit = tf.reshape(dx_visit, (-1, options['dx_emb_size'])) # dx_emb_size=200
 
     cpt_visit = tf.nn.embedding_lookup(W_emb_cpt, tf.reshape(cpt_var, (-1, options['max_cpt_per_visit'])))
     cpt_visit = emb_activation(cpt_visit)
@@ -128,23 +130,22 @@ def build_model(options):
     attention_weights = tf.nn.softmax(attention)
     
     EHR_obj = tf.gather_nd(attention_weights,[[0,0]])*icd_visit + tf.gather_nd(attention_weights,[[0,1]])*cpt_visit + tf.gather_nd(attention_weights,[[0,2]])*med_visit + tf.gather_nd(attention_weights,[[0,3]])*demo_visit + tf.gather_nd(attention_weights,[[0,4]])*topic_visit
-    W_dx = snt.Sequential([snt.Linear(output_size=options['ehr_emb_size'], name='W_ehr'), visit_activation])
+    W_dx = tf.keras.layers.Dense(options['ehr_emb_size'], activation=visit_activation, name='W_ehr')
     EHR_obj = W_dx(EHR_obj)
     
 #     use the following codes if not use attention weights   
 #     # sum of ICD-9,medication and cpt codes
 #     EHR_obj = icd_visit + cpt_visit + med_visit + demo_visit + topic_visit
-#     W_dx = snt.Sequential([snt.Linear(output_size=options['ehr_emb_size'], name='W_ehr'), visit_activation])
+#     W_dx = tf.keras.layers.Dense(options['ehr_emb_size'], activation=visit_activation, name='W_ehr')
 #     EHR_obj = W_dx(EHR_obj)
     
     seq_visit = tf.reshape(EHR_obj, (-1, options['batch_size'], options['visit_emb_size']))     
     seq_length = tf.placeholder(tf.int32, shape=(options['batch_size']), name='seq_length')
-    rnn = snt.GRU(options['rnn_size'], name='emb2rnn')
-    rnn2pred = snt.Sequential([snt.Linear(output_size=options['output_size'], name='rnn2pred'), tf.nn.sigmoid])
-    
+    rnn_cell = tf.keras.layers.GRUCell(options['rnn_size'], name='emb2rnn')
+    rnn2pred = tf.keras.layers.Dense(options['output_size'], activation=tf.nn.sigmoid, name='rnn2pred')
     
     #output
-    _, final_states = tf.nn.dynamic_rnn(rnn, seq_visit, dtype=tf.float32, time_major=True, sequence_length=seq_length)
+    _, final_states = tf.nn.dynamic_rnn(rnn_cell, seq_visit, dtype=tf.float32, time_major=True, sequence_length=seq_length)
     preds = tf.squeeze(rnn2pred(final_states))
     labels = tf.placeholder(tf.float32, shape=(options['batch_size']), name='labels')
     loss = -tf.reduce_mean(labels * tf.log(preds + 1e-10) + (1. - labels) * tf.log(1. - preds + 1e-10))

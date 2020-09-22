@@ -5,7 +5,7 @@ HCET is a temopral deep learning model which leverage the data heterogeneity of 
 
 **STEP 1: Installation**  
 
-1. We used [python](https://www.python.org/) version 3.6.5, and [TensorFlow](https://www.tensorflow.org/install) version 1.12.
+1. We used [python](https://www.python.org/) version 3.6.5, and [TensorFlow](https://www.tensorflow.org/install) version 1.14.
 
 2. [CUDA](https://developer.nvidia.com/cuda-downloads) was also used and highly suggested for GPU computation.
 
